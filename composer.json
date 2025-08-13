@@ -1,0 +1,27 @@
+{
+    "name": "ezmu/docs-generator",
+    "description": "Laravel Docs Generator",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ez Eldeen A. Y. Mushtaha",
+            "email": "3z.eldeen@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+                  "Ezmu\\DocsGenerator\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+        "Ezmu\\DocsGenerator\\DocsGeneratorServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
+

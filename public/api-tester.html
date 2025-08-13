@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>API Tester with Folders</title>
+
+<style>/* Global & Body */
+body {
+  margin: 0;
+  font-family: "Courier New", Courier, monospace;
+  background: #121212;
+  color: #c5c8c6;
+}
+
+/* Container layout */
+#container {
+  display: flex;
+  height: 100vh;
+  gap: 1rem;
+}
+
+/* Sidebar */
+#sidebar {
+  width: 300px;
+  background: #1e1e1e;
+  color: #c5c8c6;
+  padding: 1rem;
+  overflow-y: auto;
+  border-right: 1px solid #333;
+  border-radius: 6px 0 0 6px;
+  box-shadow: 2px 0 6px rgba(0,0,0,0.3);
+}
+
+#sidebar h2 {
+  margin-top: 0;
+  color: #00ffcc;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.requests-list {
+  max-height: 75vh;
+  overflow-y: auto;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  border-radius: 4px;
+  background: #2a2a2a;
+}
+
+.requests-list div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.2rem 0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.requests-list div:hover {
+  background: #333;
+}
+
+.requests-list button {
+  border: none;
+  background: none;
+  color: #c5c8c6;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-align: left;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.requests-list button:hover {
+  color: #121212;
+}
+
+.folder-btn::before {
+  content: "[DIR]";
+  display: inline-block;
+  margin-right: 0.3rem;
+  color: #00ccff;
+  font-weight: bold;
+}
+
+.request-btn::before {
+  content: "[REQ]";
+  display: inline-block;
+  margin-right: 0.3rem;
+  margin-left:  1rem;
+  color: #cccc00;
+  font-weight: bold;
+}
+
+.delete-btn {
+  color: #ff5555;
+  font-weight: bold;
+}
+
+.delete-btn:hover {
+  color: #ff0000;
+}
+
+.requests-list img {
+  max-width: 50px;
+  max-height: 50px;
+  border: 1px solid #555;
+  border-radius: 3px;
+  margin-left: 0.5rem;
+}
+
+#main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  background: #121212;
+  color: #c5c8c6;
+  overflow: hidden; /* prevent outer scroll */
+}
+
+/* Make the request form scrollable */
+.request-form {
+  flex: 1;
+  overflow-y: auto;  /* vertical scroll if needed */
+  padding-right: 0.5rem; /* small padding for scrollbar */
+}
+
+
+
+
+label {
+  display: block;
+  margin: 0.5rem 0 0.2rem;
+  font-weight: bold;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 0.4rem;
+  font-family: monospace;
+  font-size: 1rem;
+  box-sizing: border-box;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background: #1e1e1e;
+  color: #c5c8c6;
+}
+
+textarea {
+  height: 120px;
+  resize: vertical;
+}
+
+button {
+  margin: 0.3rem 0.3rem 0.3rem 0;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  border: none;
+  background: #333;
+  color: #c5c8c6;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #00ffcc;
+  color: #121212;
+}
+
+button.small {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+/* Response area */
+.response-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.response-container h2 {
+  margin: 35px 0 0.5rem 0;
+  color: #00ffcc;
+}
+
+#responseOutput {
+  flex: 1;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow: auto;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.9rem;
+  color: #c5c8c6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.request-form::-webkit-scrollbar {
+  width: 8px;
+}
+
+.request-form::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 4px;
+}
+
+.request-form::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+</style>
+</head>
+<body>
+
+<div id="container">
+  <aside id="sidebar">
+    <h2>Saved Requests</h2>
+    <div class="requests-list" id="savedRequests"></div>
+    <button id="addFolderBtn">Add Folder</button>
+  </aside>
+
+ <main id="main-content">
+  <div class="request-form">
+    <h1>API Tester</h1>
+
+    <label for="url">Request URL:</label>
+    <input type="text" id="url" placeholder="https://api.example.com/v1/users" />
+
+    <div class="flex">
+      <div>
+        <label for="method">HTTP Method:</label>
+        <select id="method">
+          <option>GET</option>
+          <option>POST</option>
+          <option>PUT</option>
+          <option>PATCH</option>
+          <option>DELETE</option>
+          <option>OPTIONS</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="contentType">Content-Type:</label>
+        <select id="contentType">
+          <option value="application/json">application/json</option>
+          <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
+          <option value="text/plain">text/plain</option>
+          <option value="multipart/form-data">multipart/form-data</option>
+        </select>
+      </div>
+    </div>
+
+    <label for="headers">Headers (one per line, e.g. Authorization: Bearer TOKEN):</label>
+    <textarea id="headers" placeholder="Authorization: Bearer abc123"></textarea>
+
+    <label for="body">Request Body (for POST/PUT/PATCH):</label>
+    <textarea id="body" placeholder='{"key": "value"}'></textarea>
+<label for="description">Description (optional):</label>
+<textarea id="description" placeholder="Enter description here..."></textarea>
+
+    <button id="sendBtn">Send Request</button>
+    <button id="saveBtn">Save Request</button>
+    <button id="updateBtn" style="display:none;">Update Request</button>
+    <button id="clearBtn">Clear Saved Requests</button>
+    <button id="exportBtn">Export Requests</button>
+    <input type="file" id="importFile" accept=".json" style="display:none;" />
+    <button id="importBtn">Import Requests</button>
+
+   </div>
+
+
+</main>
+      <div class="response-container">
+    <h2>Response</h2>
+    <pre id="responseOutput">No response yet.</pre>
+  </div>
+</div>
+
+<script>
+(() => {
+  const urlInput = document.getElementById('url');
+  const methodSelect = document.getElementById('method');
+  const headersInput = document.getElementById('headers');
+  const bodyInput = document.getElementById('body');
+  const contentTypeSelect = document.getElementById('contentType');
+  const sendBtn = document.getElementById('sendBtn');
+  const saveBtn = document.getElementById('saveBtn');
+  const updateBtn = document.getElementById('updateBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const importBtn = document.getElementById('importBtn');
+  const importFile = document.getElementById('importFile');
+  const responseOutput = document.getElementById('responseOutput');
+  const savedRequestsDiv = document.getElementById('savedRequests');
+  const addFolderBtn = document.getElementById('addFolderBtn');
+
+  // savedRequests is nested array of requests/folders
+  let savedRequests = JSON.parse(localStorage.getItem('apiTesterRequests') || '[]');
+
+  // editingInfo keeps {parentArray, index} to update nested request
+  let editingInfo = null;
+
+  // Render requests and folders recursively
+ let draggedItem = null; // currently dragged data
+let draggedElement = null; // currently dragged DOM element
+
+function renderSavedRequests() {
+  savedRequestsDiv.innerHTML = '';
+  if (savedRequests.length === 0) {
+    savedRequestsDiv.textContent = 'No saved requests.';
+    return;
+  }
+  
+  function renderItems(items, container, level = 0) {
+    items.forEach((item, i) => {
+      const div = document.createElement('div');
+      div.style.paddingLeft = (level * 20) + 'px';
+      div.draggable = true;
+
+      // store reference to item so we can reorder later
+      div.dataset.index = i;
+      div.dataset.level = level;
+      div.dataset.type = item.type;
+      div.dataset.name = item.name || '';
+
+      // DRAG EVENTS
+      div.addEventListener('dragstart', e => {
+        draggedItem = { item, parent: items, index: i };
+        draggedElement = div;
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData('text/plain', 'dragging');
+      });
+      div.addEventListener('dragover', e => {
+        e.preventDefault();
+        div.classList.add('drag-over');
+      });
+      div.addEventListener('dragleave', () => {
+        div.classList.remove('drag-over');
+    
+      });
+      div.addEventListener('drop', e => {
+        e.preventDefault();
+        div.classList.remove('drag-over');
+        if (!draggedItem || draggedElement === div) return;
+
+        // remove from old location
+        draggedItem.parent.splice(draggedItem.index, 1);
+
+        // determine drop target
+        let dropIndex = parseInt(div.dataset.index);
+        let dropParent = items; // same container
+
+        // insert before target
+        dropParent.splice(dropIndex, 0, draggedItem.item);
+
+        saveRequestsToLocalStorage();
+        renderSavedRequests();
+            saveToStorage();
+      });
+
+   if (item.type === 'folder') {
+    const folderBtn = document.createElement('button');
+    folderBtn.textContent = item.name;
+    folderBtn.className = 'folder-btn';
+    folderBtn.onclick = () => {
+        const isHidden = item.childrenDiv.style.display === 'none';
+        item.childrenDiv.style.display = isHidden ? 'block' : 'none';
+    };
+    div.appendChild(folderBtn);
+
+    const deleteFolderBtn = document.createElement('button');
+    deleteFolderBtn.textContent = '[X]';
+    deleteFolderBtn.className = 'delete-btn';
+    deleteFolderBtn.title = 'Delete Folder';
+    deleteFolderBtn.onclick = (e) => {
+        e.stopPropagation();
+        if(confirm(`Delete folder "${item.name}" and all its contents?`)) {
+            items.splice(i, 1);
+            saveToStorage();
+            renderSavedRequests();
+            clearFormIfEditingEditing(item);
+        }
+    };
+    div.appendChild(deleteFolderBtn);
+
+    const childrenDiv = document.createElement('div');
+    childrenDiv.style.marginLeft = '1rem';
+    childrenDiv.style.display = 'block';
+    item.childrenDiv = childrenDiv;
+
+    renderItems(item.children || [], childrenDiv, level + 1);
+    div.appendChild(childrenDiv);
+
+} else if (item.type === 'request') {
+  const reqBtn = document.createElement('button');
+  reqBtn.textContent = item.name || `${item.method} ${item.url}`;
+  reqBtn.title = 'Load this request';
+  reqBtn.classList.add('request-btn');
+  reqBtn.onclick = () => loadRequestByPath(item);
+  div.appendChild(reqBtn);
+
+
+
+
+}
+
+
+
+      
+      container.appendChild(div);
+    });
+  }
+  
+  renderItems(savedRequests, savedRequestsDiv);
+}
+
+function saveRequestsToLocalStorage() {
+  localStorage.setItem('savedRequests', JSON.stringify(savedRequests));
+}
+
+function loadRequestByPath(item) {
+  if (item.type !== 'request') return;
+
+  // Fill form fields
+  urlInput.value = item.url || '';
+  methodSelect.value = item.method || 'GET';
+  contentTypeSelect.value = item.contentType || 'application/json';
+  headersInput.value = (item.headers || []).map(h => `${h.key}: ${h.value}`).join('\n');
+  bodyInput.value = item.body || '';
+
+  // Optional: Show description and image
+  const descField = document.getElementById('description');
+  const imgPreview = document.getElementById('requestImagePreview');
+  if(descField) descField.value = item.description || '';
+  if(imgPreview) imgPreview.src = item.image || '';
+
+  editingInfo = findItemLocation(savedRequests, item);
+
+  saveBtn.style.display = 'none';
+  updateBtn.style.display = 'inline-block';
+
+  responseOutput.textContent = 'Loaded saved request.';
+}
+
+
+  function clearFormIfEditingEditing(item) {
+    if(!editingInfo) return;
+    const {parentArray, index} = editingInfo;
+    if(parentArray[index] === item) {
+      clearForm();
+      editingInfo = null;
+    }
+  }
+
+  // load a request item into form and set editingInfo
+  function loadRequestByPath(item) {
+    if (item.type !== 'request') return;
+    urlInput.value = item.url || '';
+    methodSelect.value = item.method || 'GET';
+    headersInput.value = (item.headers || []).map(h => `${h.key}: ${h.value}`).join('\n');
+    bodyInput.value = item.body || '';
+    contentTypeSelect.value = item.contentType || 'application/json';
+    responseOutput.textContent = 'Loaded saved request.';
+    const descField = document.getElementById('description');
+    if (descField) descField.value = item.description || '';
+    editingInfo = findItemLocation(savedRequests, item);
+    saveBtn.style.display = 'none';
+    updateBtn.style.display = 'inline-block';
+    }
+
+    // find parent array & index of item in nested structure
+    function findItemLocation(items, target) {
+    for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item === target) {
+    return {parentArray: items, index: i};
+    }
+    if (item.type === 'folder' && item.children) {
+    const res = findItemLocation(item.children, target);
+    if (res) return res;
+    }
+    }
+    return null;
+    }
+
+    function clearForm() {
+        urlInput.value = '';
+        methodSelect.value = 'GET';
+        headersInput.value = '';
+        bodyInput.value = '';
+        contentTypeSelect.value = 'application/json';
+        responseOutput.textContent = 'No response yet.';
+        saveBtn.style.display = 'inline-block';
+        updateBtn.style.display = 'none';
+    }
+
+    function parseHeaders(text) {
+        return text.split('\n').map(line => {
+        const [key, ...rest] = line.split(':');
+        return { key: key?.trim(), value: rest.join(':').trim() };
+        }).filter(h => h.key && h.value);
+    }
+
+    async function sendRequest() {
+        const url = urlInput.value.trim();
+        const method = methodSelect.value;
+        const headersArray = parseHeaders(headersInput.value);
+        const contentType = contentTypeSelect.value;
+        const body = bodyInput.value;
+        if (!url) {
+        alert('Please enter a URL.');
+        return;
+    }
+
+    let fetchOptions = {
+    method,
+            headers: {},
+    };
+    headersArray.forEach(({key, value}) => {
+        fetchOptions.headers[key] = value;  
+    });
+    if (['POST', 'PUT', 'PATCH'].includes(method.toUpperCase()) && body) {
+        if (!fetchOptions.headers['Content-Type']) {
+            fetchOptions.headers['Content-Type'] = contentType;
+        }
+
+        if (contentType === 'application/json') {
+            try {
+                fetchOptions.body = JSON.stringify(JSON.parse(body));
+            } catch (e) {
+                alert('Invalid JSON body.');
+                return;
+            }
+        } else {
+            fetchOptions.body = body;
+        }
+    }
+
+    responseOutput.textContent = 'Loading...';
+    try {
+    const res = await fetch(url, fetchOptions);
+    let text = await res.text();
+    const isJson = res.headers.get('content-type')?.includes('application/json');
+    if (isJson) {
+
+    const json = JSON.parse(text);
+    text = syntaxHighlight(json);
+  
+    } else {
+    text = escapeHtml(text);
+    }
+
+    responseOutput.innerHTML =
+            `<strong>Status:</strong> ${res.status} ${res.statusText}\n\n` +
+            `<strong>Headers:</strong>\n` +
+    [...res.headers.entries()].map(([k, v]) => `${k}: ${v}`).join('\n') +
+            `\n\n<strong>Body:</strong>\n${text}`;
+    } catch (err) {
+    responseOutput.textContent = 'Error: ' + err.message;
+    }
+    }
+
+    function saveCurrentRequest() {
+    const url = urlInput.value.trim();
+    const method = methodSelect.value;
+    if (!url) {
+    alert('Please enter a URL before saving.');
+    return;
+    }
+
+    const headersArray = parseHeaders(headersInput.value);
+    const body = bodyInput.value;
+    const contentType = contentTypeSelect.value;
+    const description = document.getElementById('description').value.trim();
+    const name = prompt('Name this request for easier identification:', `${method} ${url}`);
+    if (!name) return;
+//  const image = prompt('Optional image URL for this request:', '') || '';
+
+    savedRequests.push({
+    type: 'request',
+            name, url, method, headers: headersArray, body, contentType,
+            description
+    });
+    saveToStorage();
+    renderSavedRequests();
+    }
+
+
+    function updateCurrentRequest() {
+    if (!editingInfo) return;
+    const url = urlInput.value.trim();
+    const method = methodSelect.value;
+    if (!url) {
+    alert('Please enter a URL before updating.');
+    return;
+    }
+
+    const headersArray = parseHeaders(headersInput.value);
+    const body = bodyInput.value;
+    const contentType = contentTypeSelect.value;
+    const description = document.getElementById('description').value.trim();
+    const name = prompt('Update name for this request:', savedRequests[editingInfo.index]?.name || `${method} ${url}`);
+    if (!name) return;
+//  const image = prompt('Update image URL:', savedRequests[editingInfo.index]?.image || '') || '';
+
+    editingInfo.parentArray[editingInfo.index] = {
+    type: 'request',
+            name, url, method, headers: headersArray, body, contentType,
+            description
+    };
+    saveToStorage();
+    renderSavedRequests();
+    editingInfo = null;
+    clearForm();
+    }
+
+
+    function saveToStorage() {
+    localStorage.setItem('apiTesterRequests', JSON.stringify(savedRequests));
+    }
+
+    function clearSavedRequests() {
+    if (!confirm('Clear all saved requests?')) return;
+    savedRequests = [];
+    saveToStorage();
+    renderSavedRequests();
+    clearForm();
+    }
+
+    function exportRequests() {
+    if (savedRequests.length === 0) {
+    alert('No saved requests to export.');
+    return;
+    }
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(savedRequests, null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", "api-tester-requests.json");
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+    }
+
+    function importRequests(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+    try {
+    const imported = JSON.parse(e.target.result);
+    if (!Array.isArray(imported)) throw new Error('Invalid format');
+    savedRequests = imported;
+    saveToStorage();
+    renderSavedRequests();
+    responseOutput.textContent = 'Imported saved requests successfully.';
+    } catch (err) {
+    alert('Failed to import saved requests: ' + err.message);
+    }
+    importFile.value = '';
+    };
+    reader.readAsText(file);
+    }
+
+    // Add Folder button handler
+    addFolderBtn.addEventListener('click', () => {
+    const folderName = prompt('Enter folder name:');
+    if (!folderName) return;
+    savedRequests.push({
+    type: 'folder',
+            name: folderName,
+            children: []
+    });
+    saveToStorage();
+    renderSavedRequests();
+    });
+    // JSON syntax highlight helpers
+    function syntaxHighlight(json) {
+    if (typeof json != 'string') {
+    json = JSON.stringify(json, undefined, 2);
+    }
+    json = escapeHtml(json);
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|\b-?\d+(\.\d*)?([eE][+\-]?\d+)?\b)/g, match => {
+    let cls = 'response-json-number';
+    if (/^"/.test(match)) {
+    if (/:$/.test(match)) {
+    cls = 'response-json-key';
+    } else {
+    cls = 'response-json-string';
+    }
+    } else if (/true|false/.test(match)) {
+    cls = 'response-json-boolean';
+    } else if (/null/.test(match)) {
+    cls = 'response-json-null';
+    }
+    return `<span class="${cls}">${match}</span>`;
+    });
+    }
+
+    function escapeHtml(text) {
+    return text.replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[m]);
+    }
+
+    sendBtn.addEventListener('click', sendRequest);
+    saveBtn.addEventListener('click', saveCurrentRequest);
+    updateBtn.addEventListener('click', updateCurrentRequest);
+    clearBtn.addEventListener('click', clearSavedRequests);
+    exportBtn.addEventListener('click', exportRequests);
+    importBtn.addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', importRequests);
+    renderSavedRequests();
+    clearForm();
+    })();
+</script>
+
+</body>
+</html>
