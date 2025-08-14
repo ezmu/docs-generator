@@ -6,6 +6,35 @@ The package provides built-in routes and views to present this documentation bea
 
 Ideal for installation guides, database ERDs, developer notes, and system overviews — all generated automatically from your code.
 
+## Screenshots
+
+### Sidebar & Navigation
+![DG-API](screenshots/DG-API.png)
+![DG-APIRoutes](screenshots/DG-APIRoutes.png)
+
+### API Testing
+![DG-APItest](screenshots/DG-APItest.png)
+
+### Assets & CSS
+![DG-Assets](screenshots/DG-Assets.png)
+![DG-CSS](screenshots/DG-CSS.png)
+
+### Blade Views & ERD
+![DG-BladeViewsTree](screenshots/DG-BladeViewsTree.png)
+![DG-ERD](screenshots/DG-ERD.png)
+
+### Models & Controllers
+![DG-ModelsRelations](screenshots/DG-ModelsRelations.png)
+![DG-controllers](screenshots/DG-controllers.png)
+
+### Installation & Routes
+![DG-install](screenshots/DG-install.png)
+![DG-install1](screenshots/DG-install1.png)
+![DG-routes1](screenshots/DG-routes1.png)
+
+### Additional Screenshots
+![d1](screenshots/d1.png)
+![models](screenshots/models.png)
 
 ## How It Works
 
